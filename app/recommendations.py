@@ -19,18 +19,18 @@ import numpy as np
 import os
 import pandas as pd
 
-import google.auth
-import google.cloud.storage as storage
+# import google.auth
+# import google.cloud.storage as storage
 
 logging.basicConfig(level=logging.INFO)
 
-LOCAL_MODEL_PATH = '/tmp'
+LOCAL_MODEL_PATH = '/Users/gurdasnijor/SideProjects/machine-learning/tensorflow-recommendation-wals/wals_ml_engine/jobs/wals_ml_local_20181206_012702'
 
 ROW_MODEL_FILE = 'model/row.npy'
 COL_MODEL_FILE = 'model/col.npy'
 USER_MODEL_FILE = 'model/user.npy'
 ITEM_MODEL_FILE = 'model/item.npy'
-USER_ITEM_DATA_FILE = 'data/recommendation_events.csv'
+USER_ITEM_DATA_FILE = '/Users/gurdasnijor/SideProjects/machine-learning/tensorflow-recommendation-wals/data/recommendation_events.csv'
 
 
 class Recommendations(object):
@@ -41,8 +41,8 @@ class Recommendations(object):
   """
 
   def __init__(self, local_model_path=LOCAL_MODEL_PATH):
-    _, project_id = google.auth.default()
-    self._bucket = 'recserve_' + project_id
+    # _, project_id = google.auth.default()
+    # self._bucket = 'recserve_' + project_id
     self._load_model(local_model_path)
 
   def _load_model(self, local_model_path):
@@ -52,21 +52,21 @@ class Recommendations(object):
       local_model_path: (string) local path to model files
     """
     # download files from GCS to local storage
-    os.makedirs(os.path.join(local_model_path, 'model'), exist_ok=True)
-    os.makedirs(os.path.join(local_model_path, 'data'), exist_ok=True)
-    client = storage.Client()
-    bucket = client.get_bucket(self._bucket)
+    # os.makedirs(os.path.join(local_model_path, 'model'), exist_ok=True)
+    # os.makedirs(os.path.join(local_model_path, 'data'), exist_ok=True)
+    # client = storage.Client()
+    # bucket = client.get_bucket(self._bucket)
 
-    logging.info('Downloading blobs.')
+    # logging.info('Downloading blobs.')
 
-    model_files = [ROW_MODEL_FILE, COL_MODEL_FILE, USER_MODEL_FILE,
-                   ITEM_MODEL_FILE, USER_ITEM_DATA_FILE]
-    for model_file in model_files:
-      blob = bucket.blob(model_file)
-      with open(os.path.join(local_model_path, model_file), 'wb') as file_obj:
-        blob.download_to_file(file_obj)
+    # model_files = [ROW_MODEL_FILE, COL_MODEL_FILE, USER_MODEL_FILE,
+    #                ITEM_MODEL_FILE, USER_ITEM_DATA_FILE]
+    # for model_file in model_files:
+    #   blob = bucket.blob(model_file)
+    #   with open(os.path.join(local_model_path, model_file), 'wb') as file_obj:
+    #     blob.download_to_file(file_obj)
 
-    logging.info('Finished downloading blobs.')
+    # logging.info('Finished downloading blobs.')
 
     # load npy arrays for user/item factors and user/item maps
     self.user_factor = np.load(os.path.join(local_model_path, ROW_MODEL_FILE))
@@ -74,11 +74,14 @@ class Recommendations(object):
     self.user_map = np.load(os.path.join(local_model_path, USER_MODEL_FILE))
     self.item_map = np.load(os.path.join(local_model_path, ITEM_MODEL_FILE))
 
+
+    print("ALL USERS", self.user_map)
+    
+
     logging.info('Finished loading arrays.')
 
     # load user_item history into pandas dataframe
-    views_df = pd.read_csv(os.path.join(local_model_path,
-                                        USER_ITEM_DATA_FILE), sep=',', header=0)
+    views_df = pd.read_csv(USER_ITEM_DATA_FILE, sep=',', header=0)
     self.user_items = views_df.groupby('clientId')
 
     logging.info('Finished loading model.')
@@ -100,9 +103,12 @@ class Recommendations(object):
     # map user id into ratings matrix user index
     user_idx = np.searchsorted(self.user_map, user_id)
 
+    print("got an id", user_idx)
+
     if user_idx:
+      # print("GOT A USER GURDAS", user_idx, self.user_items)
       # get already viewed items from views dataframe
-      already_rated = self.user_items.get_group(user_id).contentId
+      already_rated = []  # self.user_items.get_group(user_id).contentId
       already_rated_idx = [np.searchsorted(self.item_map, i)
                            for i in already_rated]
 
@@ -141,6 +147,10 @@ def generate_recommendations(user_idx, user_rated, row_factor, col_factor, k):
 
   # bounds checking for args
   assert (row_factor.shape[0] - len(user_rated)) >= k
+
+  print("ROW FACTOR", row_factor.size)
+  print("COL FACTOR", col_factor)
+  print("USER IDX", user_idx)
 
   # retrieve user factor
   user_f = row_factor[user_idx]

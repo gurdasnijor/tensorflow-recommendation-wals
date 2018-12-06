@@ -129,12 +129,12 @@ def parse_arguments():
   parser.add_argument(
       '--delimiter',
       type=str,
-      default='\t',
+      default=',',
       help='Delimiter for csv data files'
   )
   parser.add_argument(
       '--headers',
-      default=False,
+      default=True,
       action='store_true',
       help='Input file has a header row'
   )

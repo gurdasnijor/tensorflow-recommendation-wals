@@ -21,6 +21,8 @@ import pandas as pd
 from scipy.sparse import coo_matrix
 import sh
 import tensorflow as tf
+import math
+import hashlib
 
 import wals
 
@@ -103,8 +105,32 @@ def _ratings_train_and_test(use_headers, delimiter, input_file):
     sparse coo_matrix for training
     sparse coo_matrix for test
   """
+
+
+  def convertToNumber (s):
+    return int(hashlib.sha256(s.encode('utf-8')).hexdigest(), 16) % 10**8
+
+
+  pd.options.display.max_columns = 10
   headers = ['user_id', 'item_id', 'rating', 'timestamp']
+  
+  
+  # headers = ['id', 'user_id', 'item_id', 'timestamp', 'rating']
+
+
   header_row = 0 if use_headers else None
+  # ratings_df = pd.read_csv(input_file,
+  #                          sep=delimiter,
+  #                          names=headers,
+  #                          header=header_row,
+  #                          dtype={
+  #                              'id': np.int32,
+  #                              'user_id': np.string_,
+  #                              'item_id': np.string_,
+  #                              'timestamp': np.string_,
+  #                              'rating': np.int32,
+  #                          },
+  #                          converters={'user_id': convertToNumber, 'item_id': convertToNumber })
   ratings_df = pd.read_csv(input_file,
                            sep=delimiter,
                            names=headers,
@@ -116,14 +142,20 @@ def _ratings_train_and_test(use_headers, delimiter, input_file):
                                'timestamp': np.int32,
                            })
 
+
+  print(ratings_df.to_string())
+
   np_users = ratings_df.user_id.as_matrix()
   np_items = ratings_df.item_id.as_matrix()
+
+
   unique_users = np.unique(np_users)
   unique_items = np.unique(np_items)
 
   n_users = unique_users.shape[0]
   n_items = unique_items.shape[0]
 
+  print(n_users, n_items)
   # make indexes for users and items if necessary
   max_user = unique_users[-1]
   max_item = unique_items[-1]
