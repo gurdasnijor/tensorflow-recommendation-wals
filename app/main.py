@@ -25,6 +25,33 @@ rec_util = Recommendations()
 DEFAULT_RECS = 5
 
 
+# @app.route('/recommendation', methods=['GET'])
+# def recommendation():
+#   """Given a user id, return a list of recommended item ids."""
+#   user_id = request.args.get('userId')
+#   num_recs = request.args.get('numRecs')
+
+#   # validate args
+#   if user_id is None:
+#     return 'No User Id provided.', 400
+#   if num_recs is None:
+#     num_recs = DEFAULT_RECS
+#   try:
+#     uid_int = int(user_id)
+#     nrecs_int = int(num_recs)
+#   except:
+#     return 'User id and number of recs arguments must be integers.', 400
+
+#   # get recommended articles
+#   rec_list = rec_util.get_recommendations(uid_int, nrecs_int)
+
+#   if rec_list is None:
+#     return 'User Id not found : %s' % user_id, 400
+
+#   json_response = jsonify({'articles': [str(i) for i in rec_list]})
+#   return json_response, 200
+
+
 @app.route('/recommendation', methods=['GET'])
 def recommendation():
   """Given a user id, return a list of recommended item ids."""
@@ -37,18 +64,31 @@ def recommendation():
   if num_recs is None:
     num_recs = DEFAULT_RECS
   try:
-    uid_int = int(user_id)
     nrecs_int = int(num_recs)
   except:
     return 'User id and number of recs arguments must be integers.', 400
 
-  # get recommended articles
-  rec_list = rec_util.get_recommendations(uid_int, nrecs_int)
+  rec_list = rec_util.get_recommendations(user_id, nrecs_int)
 
   if rec_list is None:
     return 'User Id not found : %s' % user_id, 400
 
-  json_response = jsonify({'articles': [str(i) for i in rec_list]})
+  json_response = jsonify(rec_list)
+  return json_response, 200
+
+
+
+@app.route('/destinations', methods=['GET'])
+def destinations():
+  dest_list = rec_util.get_destination_map()
+  json_response = jsonify(dest_list)
+  return json_response, 200
+
+
+@app.route('/users', methods=['GET'])
+def users():
+  user_list = rec_util.get_user_map()
+  json_response = jsonify(user_list)
   return json_response, 200
 
 

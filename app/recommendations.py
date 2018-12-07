@@ -1,36 +1,24 @@
-# Copyright 2017 Google Inc. All Rights Reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
-
 """Recommendation generation module."""
 
 import logging
 import numpy as np
 import os
 import pandas as pd
+import pickle
 
-# import google.auth
-# import google.cloud.storage as storage
 
 logging.basicConfig(level=logging.INFO)
 
-LOCAL_MODEL_PATH = '/Users/gurdasnijor/SideProjects/machine-learning/tensorflow-recommendation-wals/wals_ml_engine/jobs/wals_ml_local_20181206_012225'
+LOCAL_MODEL_PATH = '/Users/gurdasnijor/SideProjects/machine-learning/tensorflow-recommendation-wals/wals_ml_engine/jobs/wals_ml_local_20181206_170104'
 
 ROW_MODEL_FILE = 'model/row.npy'
 COL_MODEL_FILE = 'model/col.npy'
 USER_MODEL_FILE = 'model/user.npy'
 ITEM_MODEL_FILE = 'model/item.npy'
 USER_ITEM_DATA_FILE = '/Users/gurdasnijor/SideProjects/machine-learning/tensorflow-recommendation-wals/data/recommendation_events.csv'
+
+ITEM_PICKLE_PATH = '/Users/gurdasnijor/SideProjects/machine-learning/tensorflow-recommendation-wals/wals_ml_engine/mappings/itemmappings.pickle'
+USER_PICKLE_PATH = '/Users/gurdasnijor/SideProjects/machine-learning/tensorflow-recommendation-wals/wals_ml_engine/mappings/usermappings.pickle'
 
 
 class Recommendations(object):
@@ -51,23 +39,6 @@ class Recommendations(object):
     Args:
       local_model_path: (string) local path to model files
     """
-    # download files from GCS to local storage
-    # os.makedirs(os.path.join(local_model_path, 'model'), exist_ok=True)
-    # os.makedirs(os.path.join(local_model_path, 'data'), exist_ok=True)
-    # client = storage.Client()
-    # bucket = client.get_bucket(self._bucket)
-
-    # logging.info('Downloading blobs.')
-
-    # model_files = [ROW_MODEL_FILE, COL_MODEL_FILE, USER_MODEL_FILE,
-    #                ITEM_MODEL_FILE, USER_ITEM_DATA_FILE]
-    # for model_file in model_files:
-    #   blob = bucket.blob(model_file)
-    #   with open(os.path.join(local_model_path, model_file), 'wb') as file_obj:
-    #     blob.download_to_file(file_obj)
-
-    # logging.info('Finished downloading blobs.')
-
     # load npy arrays for user/item factors and user/item maps
     self.user_factor = np.load(os.path.join(local_model_path, ROW_MODEL_FILE))
     self.item_factor = np.load(os.path.join(local_model_path, COL_MODEL_FILE))
@@ -75,53 +46,40 @@ class Recommendations(object):
     self.item_map = np.load(os.path.join(local_model_path, ITEM_MODEL_FILE))
 
 
-    print("ALL USERS", self.user_map)
-    
+    self.unique_items = pickle.load(open(ITEM_PICKLE_PATH, "rb"))
+    self.unique_users = pickle.load(open(USER_PICKLE_PATH, "rb"))
+    self.inv_map = {v: k for k, v in self.unique_items.items()}
+    # self.inv_user_map = {v: k for k, v in self.unique_users.items()}
 
-    logging.info('Finished loading arrays.')
-
-    # load user_item history into pandas dataframe
-    views_df = pd.read_csv(USER_ITEM_DATA_FILE, sep=',', header=0)
-    self.user_items = views_df.groupby('clientId')
-
-    logging.info('Finished loading model.')
 
   def get_recommendations(self, user_id, num_recs):
-    """Given a user id, return list of num_recs recommended item ids.
+    # generate list of recommended article indexes from model
+    return self.destination_recommendations(user_id,
+                                               self.user_factor,
+                                               self.item_factor,
+                                               num_recs)
 
-    Args:
-      user_id: (string) The user id
-      num_recs: (int) The number of recommended items to return
 
-    Returns:
-      [item_id_0, item_id_1, ... item_id_k-1]: The list of k recommended items,
-        if user id is found.
-      None: The user id was not found.
-    """
-    article_recommendations = None
+  def destination_recommendations(self, workspace_slug, user_factor, item_factor, k):
+    user_idx = self.unique_users[workspace_slug]
+    # user_idx = np.searchsorted(self.user_map, user_idx)
+    user_f = user_factor[user_idx]
 
-    # map user id into ratings matrix user index
-    user_idx = np.searchsorted(self.user_map, user_id)
+    # dot product of item factors with user factor gives predicted ratings
+    pred_ratings = item_factor.dot(user_f)
 
-    print("got an id", user_idx)
+    # find candidate recommended item indexes sorted by predicted rating
+    candidate_items = np.argsort(pred_ratings)[-k:]
 
-    if user_idx:
-      # print("GOT A USER GURDAS", user_idx, self.user_items)
-      # get already viewed items from views dataframe
-      already_rated = []  # self.user_items.get_group(user_id).contentId
-      already_rated_idx = [np.searchsorted(self.item_map, i)
-                           for i in already_rated]
+    return list(map(lambda x: self.inv_map[x], candidate_items))
 
-      # generate list of recommended article indexes from model
-      recommendations = generate_recommendations(user_idx, already_rated_idx,
-                                                 self.user_factor,
-                                                 self.item_factor,
-                                                 num_recs)
 
-      # map article indexes back to article ids
-      article_recommendations = [self.item_map[i] for i in recommendations]
+  def get_destination_map(self):
+    print(self.unique_items)
+    return self.unique_items
 
-    return article_recommendations
+  def get_user_map(self):
+    return self.unique_users
 
 
 def generate_recommendations(user_idx, user_rated, row_factor, col_factor, k):

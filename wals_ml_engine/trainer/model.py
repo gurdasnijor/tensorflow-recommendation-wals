@@ -107,8 +107,6 @@ def _ratings_train_and_test(use_headers, delimiter, input_file):
     sparse coo_matrix for test
   """
 
-  # def convertToNumber (s):
-  #   return int(hashlib.sha256(s.encode('utf-8')).hexdigest(), 16) % 10**8
 
   def getIdMap (list):
     return dict(map(lambda (i,x): [x, i], enumerate(set(list))))
@@ -132,27 +130,9 @@ def _ratings_train_and_test(use_headers, delimiter, input_file):
                                'rating': np.int32,
                            })
 
-  # header_row = 0 if use_headers else None
-  # ratings_df = pd.read_csv(input_file,
-  #                          sep=delimiter,
-  #                          names=headers,
-  #                          header=header_row,
-  #                          dtype={
-  #                              'user_id': np.int32,
-  #                              'item_id': np.int32,
-  #                              'rating': np.float32,
-  #                              'timestamp': np.int32,
-  #                          })
-
-
-  # print(ratings_df.to_string())
 
   np_users = ratings_df.user_id.as_matrix()
   np_items = ratings_df.item_id.as_matrix()
-
-
-  # print(np_users, np_items)
-
 
   unique_users = np.unique(np_users)
   unique_items = np.unique(np_items)
@@ -168,31 +148,8 @@ def _ratings_train_and_test(use_headers, delimiter, input_file):
   pickle.dump(user_map, open("/Users/gurdasnijor/SideProjects/machine-learning/tensorflow-recommendation-wals/wals_ml_engine/mappings/usermappings.pickle", "wb"))
   pickle.dump(item_map, open("/Users/gurdasnijor/SideProjects/machine-learning/tensorflow-recommendation-wals/wals_ml_engine/mappings/itemmappings.pickle", "wb"))
 
-  # np.save(os.path.join('/Users/gurdasnijor/SideProjects/machine-learning/tensorflow-recommendation-wals/wals_ml_engine/mappings', 'usermappings.npz'), user_map)
-  # np.save(os.path.join('/Users/gurdasnijor/SideProjects/machine-learning/tensorflow-recommendation-wals/wals_ml_engine/mappings', 'itemmappings.npz'), item_map)
-
-  # print(user_map)
-  # print(item_map)
-
-
-  # print(n_users, n_items)
-  # make indexes for users and items if necessary
   max_user = unique_users[-1]
   max_item = unique_items[-1]
-  # if n_users != max_user or n_items != max_item:
-    # make an array of 0-indexed unique user ids corresponding to the dataset
-    # stack of user ids
-    # z = np.zeros(max_user+1, dtype=int)
-    # z[unique_users] = np.arange(n_users)
-    # u_r = z[np_users]
-
-    # make an array of 0-indexed unique item ids corresponding to the dataset
-    # stack of item ids
-    # z = np.zeros(max_item+1, dtype=int)
-    # z[unique_items] = np.arange(n_items)
-    # i_r = z[np_items]
-
-    # construct the ratings set from the three stacks
 
   ratings = []
   for (i, row) in ratings_df.iterrows():
@@ -204,26 +161,9 @@ def _ratings_train_and_test(use_headers, delimiter, input_file):
     ratings.append([user_idx, item_idx, 1])
 
 
-    # np_ratings = ratings_df.rating.as_matrix()
-    # ratings = np.zeros((np_ratings.shape[0], 3), dtype=object)
-    # ratings[:, 0] = u_r
-    # ratings[:, 1] = i_r
-    # ratings[:, 2] = np_ratings
-  # else:
-  # ratings = ratings_df.as_matrix(['user_id', 'item_id', 'rating'])
-    # deal with 1-based user indices
-  # ratings[:, 0] -= 1
-  # ratings[:, 1] -= 1
-
-
-
   ratings = pd.DataFrame(ratings)
-
   print(ratings.head())
 
-  # print(n_users)
-  # print(n_items)
-  # print(ratings.shape)
 
   ratings_matrix = ratings.as_matrix()
 
@@ -231,63 +171,6 @@ def _ratings_train_and_test(use_headers, delimiter, input_file):
                                                          n_users, n_items)
 
   return ratings_matrix[:, 0], ratings_matrix[:, 1], tr_sparse, test_sparse
-
-
-# def _page_views_train_and_test(input_file):
-#   """Load page views dataset, and create train and set sparse matrices.
-
-#   Assumes 'clientId', 'contentId', and 'timeOnPage' columns.
-
-#   Args:
-#     input_file: path to csv data file
-
-#   Returns:
-#     array of user IDs for each row of the ratings matrix
-#     array of item IDs for each column of the rating matrix
-#     sparse coo_matrix for training
-#     sparse coo_matrix for test
-#   """
-#   views_df = pd.read_csv(input_file, sep=',', header=0)
-
-#   df_items = pd.DataFrame({'contentId': views_df.contentId.unique()})
-#   df_sorted_items = df_items.sort_values('contentId').reset_index()
-#   pds_items = df_sorted_items.contentId
-
-#   # preprocess data. df.groupby.agg sorts clientId and contentId
-#   df_user_items = views_df.groupby(['clientId', 'contentId']
-#                                   ).agg({'timeOnPage': 'sum'})
-
-#   # create a list of (userId, itemId, timeOnPage) ratings, where userId and
-#   # clientId are 0-indexed
-#   current_u = -1
-#   ux = -1
-#   pv_ratings = []
-#   user_ux = []
-#   for timeonpg in df_user_items.itertuples():
-#     user = timeonpg[0][0]
-#     item = timeonpg[0][1]
-
-#     # as we go, build a (sorted) list of user ids
-#     if user != current_u:
-#       user_ux.append(user)
-#       ux += 1
-#       current_u = user
-
-#     # this search makes the preprocessing time O(r * i log(i)),
-#     # r = # ratings, i = # items
-#     ix = pds_items.searchsorted(item)[0]
-#     pv_ratings.append((ux, ix, timeonpg[1]))
-
-#   # convert ratings list and user map to np array
-#   pv_ratings = np.asarray(pv_ratings)
-#   user_ux = np.asarray(user_ux)
-
-#   # create train and test sets
-#   tr_sparse, test_sparse = _create_sparse_train_and_test(pv_ratings,
-#                                                          ux + 1,
-#                                                          df_items.size)
-
-#   return user_ux, pds_items.as_matrix(), tr_sparse, test_sparse
 
 
 def _create_sparse_train_and_test(ratings, n_users, n_items):
@@ -356,8 +239,6 @@ def train_model(args, tr_sparse):
                                                                 feature_wt_exp,
                                                                 obs_wt)
 
-
-  # print("YOLO", row_factor.shape, col_factor.shape)
 
   # factorize matrix
   session = wals.simple_train(model, input_tensor, num_iters)
