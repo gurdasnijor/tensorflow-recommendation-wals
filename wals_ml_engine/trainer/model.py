@@ -23,7 +23,8 @@ import sh
 import tensorflow as tf
 import math
 import hashlib
-import pickle
+# import pickle
+import json
 
 import wals
 
@@ -43,13 +44,66 @@ DEFAULT_PARAMS = {
     'delimiter': '\t'
 }
 
-# parameters optimized with hypertuning for the MovieLens data set
+
+#29
+# OPTIMIZED_PARAMS = {
+#   "feature_wt_factor": 1.1946763313556314,
+#   "unobs_weight": 4.9347356920463046,
+#   "latent_factors": 5,
+#   "regularization": 0.21954982673332957
+# }
+
+#6
+# OPTIMIZED_PARAMS = {
+#  "unobs_weight": 4.9859337569694464,
+#  "latent_factors": 8,
+#  "regularization": 0.37036879661012456,
+#  "feature_wt_factor": 1.1365572129425574
+# }
+
+# TRIAL 5
+# OPTIMIZED_PARAMS = {
+#   "feature_wt_factor": 1.6814263823281008,
+#   "unobs_weight": 4.9999932901849844,
+#   "latent_factors": 26,
+#   "regularization": 1.2374569622507217
+# }
+
+# parameters optimized with hypertuning for the Segment source->destination mapping data set (trial 3)
 OPTIMIZED_PARAMS = {
-    'latent_factors': 34,
-    'regularization': 9.83,
-    'unobs_weight': 0.001,
-    'feature_wt_factor': 189.8,
+  "unobs_weight": 4.9999851736561416,
+  "latent_factors": 50,
+  "regularization": 4.1463226668520585,
+  "feature_wt_factor": 143.05494576295536
 }
+
+# parameters optimized with hypertuning for the Segment source->destination mapping data set (trial 2)
+# OPTIMIZED_PARAMS = {
+#   "feature_wt_factor": 149.75688364930974,
+#   "unobs_weight": 4.990924530386307,
+#   "regularization": 8.82656319481439,
+#   "latent_factors": 47
+# }
+
+# parameters optimized with hypertuning for the Segment source->destination mapping data set (trial 1)
+# OPTIMIZED_PARAMS = {
+#   "feature_wt_factor": 143.27186739016742,
+#   "unobs_weight": 3.92952493434756,
+#   "latent_factors": 30,
+#   "regularization": 9.9998411077860787
+# }
+
+
+# parameters optimized with hypertuning for the MovieLens data set
+# OPTIMIZED_PARAMS = {
+#     'latent_factors': 34,
+#     'regularization': 9.83,
+#     'unobs_weight': 0.001,
+#     'feature_wt_factor': 189.8,
+# }
+
+
+
 
 # parameters optimized with hypertuning for the included web views data set
 OPTIMIZED_PARAMS_WEB = {
@@ -145,8 +199,8 @@ def _ratings_train_and_test(use_headers, delimiter, input_file):
   item_map = getIdMap(unique_items.tolist())
 
   
-  pickle.dump(user_map, open("/Users/gurdasnijor/SideProjects/machine-learning/tensorflow-recommendation-wals/wals_ml_engine/mappings/usermappings.pickle", "wb"))
-  pickle.dump(item_map, open("/Users/gurdasnijor/SideProjects/machine-learning/tensorflow-recommendation-wals/wals_ml_engine/mappings/itemmappings.pickle", "wb"))
+  json.dump(user_map, open("/Users/gurdasnijor/SideProjects/machine-learning/tensorflow-recommendation-wals/wals_ml_engine/mappings/usermappings.json", "wb"))
+  json.dump(item_map, open("/Users/gurdasnijor/SideProjects/machine-learning/tensorflow-recommendation-wals/wals_ml_engine/mappings/itemmappings.json", "wb"))
 
   max_user = unique_users[-1]
   max_item = unique_items[-1]

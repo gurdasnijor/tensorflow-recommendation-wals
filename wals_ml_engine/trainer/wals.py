@@ -70,6 +70,8 @@ def simple_train(model, input_tensor, num_iterations):
       sess.run(model.initialize_col_update_op)
       sess.run(col_update_op)
 
+    writer = tf.summary.FileWriter('./graphs', sess.graph)
+
   return sess
 
 LOG_RATINGS = 0

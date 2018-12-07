@@ -49,7 +49,7 @@ date
 TIME=`date +"%Y%m%d_%H%M%S"`
 
 # CHANGE TO YOUR BUCKET
-BUCKET="gs://rec_serve"
+BUCKET="gs://recserve_segment-1119"
 
 if [[ $# < 2 ]]; then
   usage
