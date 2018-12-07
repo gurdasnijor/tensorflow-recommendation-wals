@@ -23,6 +23,7 @@ import sh
 import tensorflow as tf
 import math
 import hashlib
+import pickle
 
 import wals
 
@@ -162,6 +163,13 @@ def _ratings_train_and_test(use_headers, delimiter, input_file):
 
   user_map = getIdMap(unique_users.tolist())
   item_map = getIdMap(unique_items.tolist())
+
+  
+  pickle.dump(user_map, open("/Users/gurdasnijor/SideProjects/machine-learning/tensorflow-recommendation-wals/wals_ml_engine/mappings/usermappings.pickle", "wb"))
+  pickle.dump(item_map, open("/Users/gurdasnijor/SideProjects/machine-learning/tensorflow-recommendation-wals/wals_ml_engine/mappings/itemmappings.pickle", "wb"))
+
+  # np.save(os.path.join('/Users/gurdasnijor/SideProjects/machine-learning/tensorflow-recommendation-wals/wals_ml_engine/mappings', 'usermappings.npz'), user_map)
+  # np.save(os.path.join('/Users/gurdasnijor/SideProjects/machine-learning/tensorflow-recommendation-wals/wals_ml_engine/mappings', 'itemmappings.npz'), item_map)
 
   # print(user_map)
   # print(item_map)
