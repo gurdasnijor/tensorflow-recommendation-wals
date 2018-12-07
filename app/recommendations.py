@@ -24,7 +24,7 @@ import pandas as pd
 
 logging.basicConfig(level=logging.INFO)
 
-LOCAL_MODEL_PATH = '/Users/gurdasnijor/SideProjects/machine-learning/tensorflow-recommendation-wals/wals_ml_engine/jobs/wals_ml_local_20181206_012702'
+LOCAL_MODEL_PATH = '/Users/gurdasnijor/SideProjects/machine-learning/tensorflow-recommendation-wals/wals_ml_engine/jobs/wals_ml_local_20181206_012225'
 
 ROW_MODEL_FILE = 'model/row.npy'
 COL_MODEL_FILE = 'model/col.npy'
